@@ -99,14 +99,19 @@ class MainWindow(QMainWindow):
                 self.map_vm.load_vbc(str(path))
             else:
                 QMessageBox.warning(self, "Unsupported", "Поддерживаются только .reg и .vbc файлы")
-        except EncodingDetectionError:
+        except EncodingDetectionError as exc:
+            logger.warning("Auto encoding detection failed for %s: %s", path, exc)
             encoding = self._ask_encoding()
             if not encoding:
                 return
-            if suffix == ".reg":
-                self.map_vm.load_reg(str(path), encoding)
-            elif suffix == ".vbc":
-                self.map_vm.load_vbc(str(path), encoding)
+            try:
+                if suffix == ".reg":
+                    self.map_vm.load_reg(str(path), encoding)
+                elif suffix == ".vbc":
+                    self.map_vm.load_vbc(str(path), encoding)
+            except Exception as retry_exc:
+                logger.error("Load failed after manual encoding selection", exc_info=True)
+                QMessageBox.critical(self, "Ошибка", str(retry_exc))
         except Exception as exc:
             logger.error("Load failed", exc_info=True)
             QMessageBox.critical(self, "Ошибка", str(exc))

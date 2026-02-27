@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from agro_gis.core.encoding_utils import read_text
+from agro_gis.core.encoding_utils import detect_encoding, read_text
 from agro_gis.core.exceptions import EncodingDetectionError
 
 
@@ -10,7 +10,7 @@ def test_detect_utf8(utf8_file):
     text, encoding, confidence = read_text(utf8_file)
     assert "Привет" in text
     assert encoding
-    assert confidence > 0
+    assert 0 <= confidence <= 1
 
 
 def test_detect_cp1251(cp1251_file):
@@ -40,3 +40,16 @@ def test_encoding_detection_error(tmp_path):
     bad.write_bytes(b"\x00\x01\x02\x03\x04")
     with pytest.raises(EncodingDetectionError):
         read_text(bad)
+
+
+def test_detect_confidence_never_exceeds_one(cp866_file):
+    raw = cp866_file.read_bytes()
+    _, confidence = detect_encoding(raw)
+    assert 0 <= confidence <= 1
+
+
+def test_binary_like_forced_decode_raises(tmp_path):
+    bad = tmp_path / "binary_like.txt"
+    bad.write_bytes(b"\x7f\x06\x19\x11\x00\x03\x0e\x04\x10\x02")
+    with pytest.raises(EncodingDetectionError):
+        read_text(bad, forced_encoding="cp866")

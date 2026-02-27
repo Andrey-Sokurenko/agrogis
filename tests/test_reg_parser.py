@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from agro_gis.core.exceptions import ParseError, WindowsRegistryFileError
+from agro_gis.core.exceptions import EncodingDetectionError, ParseError, WindowsRegistryFileError
 from agro_gis.core.reg_parser import RegParser
 
 
@@ -47,3 +47,10 @@ def test_parse_error_unknown_format(tmp_path):
 def test_parse_cp866_fixture(reg_cp866_file):
     gdf = RegParser().parse(reg_cp866_file)
     assert len(gdf) == 1
+
+
+def test_reg_binary_payload_raises_encoding_error(tmp_path):
+    path = tmp_path / "binary.reg"
+    path.write_bytes(b"\x7f\x06\x19\x11\x00\x03\x0e\x04\x10\x02")
+    with pytest.raises(EncodingDetectionError):
+        RegParser().parse(path)
