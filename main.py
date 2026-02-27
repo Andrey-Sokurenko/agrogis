@@ -12,10 +12,14 @@ from agro_gis.viewmodels.map_viewmodel import MapViewModel
 
 
 def configure_logging() -> None:
+    # Keep application diagnostics detailed while suppressing noisy third-party debug output.
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
     )
+    logging.getLogger("agro_gis").setLevel(logging.DEBUG)
+    logging.getLogger("matplotlib").setLevel(logging.WARNING)
+    logging.getLogger("charset_normalizer").setLevel(logging.INFO)
 
 
 if __name__ == "__main__":
